@@ -33,7 +33,7 @@ raw-window-handle = { version = "0.4", optional = true }
 rrise-headers = { version = "0.2", optional = true }
 
 [build-dependencies]
-bindgen = "0.59.2"
+bindgen = "0.60.1"
 cc = { version = "1.0.73", features = ["parallel"] }
 paste = "1.0.7"
 

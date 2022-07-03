@@ -6,7 +6,7 @@ use std::env;
 use std::fs::File;
 use std::io;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 
 macro_rules! static_feature {
     ($feature:literal) => {
@@ -23,7 +23,11 @@ macro_rules! static_feature_h {
 }
 
 fn main() -> io::Result<()> {
+    #[cfg(not(target_os = "macos"))]
     let wwise_sdk = PathBuf::from(env::var("WWISESDK").expect("env variable WWISESDK not found"));
+
+    #[cfg(target_os = "macos")]
+    let wwise_sdk = PathBuf::from("/Applications/Audiokinetic/Wwise 2021.1.9.7847/SDK");
 
     // --- RERUN CONFIG
     println!("cargo:rerun-if-changed=c/ak.h");
@@ -39,6 +43,7 @@ fn main() -> io::Result<()> {
     println!("cargo:rustc-link-lib=static=AkSpatialAudio");
     println!("cargo:rustc-link-lib=static=AkMemoryMgr");
     println!("cargo:rustc-link-lib=static=AkStreamMgr");
+
     static_feature!("AkVorbisDecoder");
     static_feature!("AkOpusDecoder");
     static_feature!("AkMeterFX");
@@ -186,7 +191,7 @@ fn main() -> io::Result<()> {
     build.compile("rrise_utilities");
     // --- END BUILD UTILITIES
 
-    // --- RUN BINDGEN
+    //  --- RUN BINDGEN
     let bindings = bindgen::Builder::default()
         .header("c/ak.h")
         .header("c/utilities/default_streaming_mgr.h")
@@ -198,6 +203,8 @@ fn main() -> io::Result<()> {
                 .into_string()
                 .unwrap()
         ))
+        .clang_args(&[&format!("--target={}", "x86_64-apple-darwin")])
+        .clang_args(&["-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"])
         .clang_arg("-x")
         .clang_arg("c++")
         .clang_arg("-std=c++14")
